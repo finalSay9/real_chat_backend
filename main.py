@@ -5,7 +5,7 @@ import logging
 
 from config import settings
 from database import init_db
-from routers import auth, users, rooms, messages, websocket
+from routes import auth, users, rooms, messages, websocket
 
 logging.basicConfig(
     level=logging.INFO,

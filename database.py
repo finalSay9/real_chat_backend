@@ -13,3 +13,8 @@ SessionLocal = sessionmaker(
 
 
 Base=declarative_base()
+
+async def init_db():
+    """Create all tables on startup."""
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
