@@ -31,6 +31,14 @@ async def _get_ws_user(token: str | None, db: AsyncSession) -> User | None:
     )
     return result.scalar_one_or_none()    
 
-
+#creating a member
+async def _is_member(room_id: str, user_id: str, db: AsyncSession) -> bool:
+    result = await db.execute(
+        select(room_members).where(
+            room_members.c.room_id == room_id,
+            room_members.c.user_id == user_id,
+        )
+    )
+    return result.first() is not None
 
 
