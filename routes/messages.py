@@ -82,3 +82,69 @@ async def list_messages(
         total=total,
         has_more=has_more,
     )
+
+
+
+
+@router.post("", response_model=MessagePublic, status_code=201)
+async def send_message(
+    room_id: str,
+    body: MessageCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    await _assert_member(room_id, current_user.id, db)
+
+    msg = Message(
+        room_id=room_id,
+        sender_id=current_user.id,
+        content=body.content,
+    )
+    db.add(msg)
+    await db.commit()
+    await db.refresh(msg)
+
+    # Reload with sender relationship
+    result = await db.execute(
+        select(Message).options(selectinload(Message.sender)).where(Message.id == msg.id)
+    )
+    msg = result.scalar_one()
+
+    schema = _to_schema(msg)
+
+    # Broadcast to all room members via WebSocket
+    await manager.broadcast(
+        room_id,
+        {
+            "type": "message",
+            "data": schema.model_dump(mode="json"),
+        },
+        exclude=current_user.id,
+    )
+
+    return schema
+
+
+@router.delete("/{message_id}", status_code=204)
+async def delete_message(
+    room_id: str,
+    message_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(Message).where(Message.id == message_id, Message.room_id == room_id)
+    )
+    msg = result.scalar_one_or_none()
+    if not msg:
+        raise HTTPException(status_code=404, detail="Message not found")
+    if msg.sender_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Can only delete your own messages")
+
+    msg.deleted = True
+    await db.commit()
+
+    await manager.broadcast(
+        room_id,
+        {"type": "message_deleted", "data": {"message_id": message_id}},
+    )
