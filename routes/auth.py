@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from multiprocessing import get_context
 from fastapi.params import Form
 from jose import JWTError, jwt
@@ -11,21 +11,16 @@ from sqlalchemy.orm import Session
 from config import settings
 from dependency import get_db
 from models import User
-    
-
-from datetime import datetime, timedelta, timezone
 from typing import Optional
-
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-
 from config import settings
-from database import get_db
-from models import User
+
+
 
 
 
@@ -82,19 +77,7 @@ def verify_token(token: str):
     
     
 
-from datetime import datetime, timedelta, timezone
-from typing import Optional
 
-from jose import JWTError, jwt
-from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status, Query
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-
-from config import settings
-from database import get_db
-from models import User
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 bearer_scheme = HTTPBearer(auto_error=False)
