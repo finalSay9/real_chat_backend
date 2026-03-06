@@ -14,10 +14,22 @@ from ws_manager import manager
 
 
 
-router = APIRouter(
-    prefix='websocket',
-    tags=['websocket']
-)
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/ws",
+             tags=["websocket"])
+
+async def _get_ws_user(token: str | None, db: AsyncSession) -> User | None:
+    """Authenticate a WebSocket connection via token query param."""
+    if not token:
+        return None
+    user_id = decode_token(token)
+    if not user_id:
+        return None
+    result = await db.execute(
+        select(User).where(User.id == user_id, User.is_active == True)
+    )
+    return result.scalar_one_or_none()    
 
 
 
