@@ -2,13 +2,13 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy.orm import Session
 from dependency import get_db
 from models import User
-from security import hash_password
+from security import create_access_token, hash_password, verify_password
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from dependency import get_db
 from models import User, UserStatus
-from schemas import RegisterRequest, TokenResponse, UserPublic, UserUpdate, StatusUpdate
+from schemas import LoginRequest, RegisterRequest, TokenResponse, UserPublic, UserUpdate, StatusUpdate
 from security import get_current_user
 from ws_manager import manager
 
