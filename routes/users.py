@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from dependency import get_db
 from models import User, UserStatus
-from schemas import UserPublic, UserUpdate, StatusUpdate
-from auth import get_current_user
+from schemas import RegisterRequest, TokenResponse, UserPublic, UserUpdate, StatusUpdate
+from security import get_current_user
 from ws_manager import manager
 
 
