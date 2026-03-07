@@ -6,7 +6,7 @@ from security import hash_password
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from database import get_db
+from dependency import get_db
 from models import User, UserStatus
 from schemas import UserPublic, UserUpdate, StatusUpdate
 from auth import get_current_user
@@ -19,24 +19,43 @@ router = APIRouter(
 )
 
 
-@router.post('/create', status_code=status.HTTP_201_CREATED, response_model=UserResponse)
-def create_user(user: CreateUser, db: Session=Depends(get_db)):
-    #check if username already exist
-    exsting_username=db.query(User).filter(User.username == user.username).first()
-    if exsting_username:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="Username already exist")
-    print("Password length:", len(user.password))
-    new_user = User(
-        username=user.username,
-        fullname=user.fullname,
-        hashed_password=hash_password(user.password)
-    )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+@router.post("/register", response_model=TokenResponse, status_code=201)
+async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
+    # Check username taken
+    result = await db.execute(select(User).where(User.username == body.username))
+    if result.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Username already taken")
 
-    return new_user
+    user = User(
+        username=body.username,
+        display_name=body.display_name,
+        hashed_password=hash_password(body.password),
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    token = create_access_token(user.id)
+    return TokenResponse(access_token=token)
+
+
+@router.post("/login", response_model=TokenResponse)
+async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.username == body.username))
+    user = result.scalar_one_or_none()
+
+    if not user or not verify_password(body.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+        )
+
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="Account disabled")
+
+    token = create_access_token(user.id)
+    return TokenResponse(access_token=token)
+
+
 
 
 @router.get("/me", response_model=UserPublic)
