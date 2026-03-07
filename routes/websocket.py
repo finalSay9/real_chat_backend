@@ -1,14 +1,15 @@
-from fastapi import FastAPI, Websocket,WebsocketDisconnect,Depends,Query,APIRouter
+from fastapi import FastAPI, WebSocket,WebSocketDisconnect,Depends,Query,APIRouter
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, insert
 from sqlalchemy.orm import selectinload
 import json
 import logging
-from database import get_db, SessionLocal
+from database import  SessionLocal
 from models import User, Room, Message, room_members, UserStatus
 from schemas import WSIncoming
-from auth import decode_token
+from security import decode_token
 from ws_manager import manager
+from dependency import get_db
 
 
 
@@ -66,7 +67,7 @@ async def websocket_room(
         { "type": "error",          "data": { "message": "..." } }
     """
     # ── Auth ──────────────────────────────────────────────────────────────────
-    async with AsyncSessionLocal() as db:
+    async with SessionLocal() as db:
         user = await _get_ws_user(token, db)
         if not user:
             await websocket.close(code=4001, reason="Unauthorized")
@@ -127,7 +128,7 @@ async def websocket_room(
                 if not payload.content or not payload.content.strip():
                     continue
 
-                async with AsyncSessionLocal() as db:
+                async with SessionLocal() as db:
                     msg = Message(
                         room_id=room_id,
                         sender_id=user.id,
