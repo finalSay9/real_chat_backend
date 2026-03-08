@@ -30,7 +30,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 oauth_scheme = OAuth2PasswordBearer(tokenUrl="token")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-bearer_scheme = HTTPBearer(auto_error=False)
+
 
 
 
@@ -111,9 +111,9 @@ def decode_token(token: str) -> Optional[str]:
 # ─── Dependencies ─────────────────────────────────────────────────────────────
 
 async def get_current_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(oauth_scheme),
     db: AsyncSession = Depends(get_db),
-) -> User:
+     ) -> User:
     exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid or expired token",
