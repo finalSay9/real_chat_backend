@@ -8,11 +8,13 @@ from models import User, Room, Message, room_members, RoomType
 from schemas import RoomCreate, RoomPublic, RoomWithLastMessage, UserPublic
 from security import get_current_user
 
-router = APIRouter(prefix="/rooms", tags=["rooms"])
+router = APIRouter(prefix="/rooms",
+                     tags=["rooms"]
+                     )
 
 
-async def _room_or_404(room_id: str, db: AsyncSession) -> Room:
-    result = await db.execute(
+def _room_or_404(room_id: str, db: Session) -> Room:
+    result = db.execute(
         select(Room).options(selectinload(Room.members)).where(Room.id == room_id)
     )
     room = result.scalar_one_or_none()
@@ -28,12 +30,12 @@ def _is_member(room: Room, user_id: str) -> bool:
 # ─── CRUD ────────────────────────────────────────────────────────────────────
 
 @router.get("", response_model=list[RoomWithLastMessage])
-async def list_rooms(
+def list_rooms(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Return all rooms the current user is a member of."""
-    result = await db.execute(
+    result = db.execute(
         select(Room)
         .join(room_members, room_members.c.room_id == Room.id)
         .where(room_members.c.user_id == current_user.id)
@@ -44,7 +46,7 @@ async def list_rooms(
     out = []
     for room in rooms:
         # Get last message
-        msg_result = await db.execute(
+        msg_result = db.execute(
             select(Message)
             .where(Message.room_id == room.id, Message.deleted == False)
             .order_by(Message.created_at.desc())
@@ -68,7 +70,7 @@ async def list_rooms(
 
 
 @router.post("", response_model=RoomPublic, status_code=201)
-async def create_room(
+def create_room(
     body: RoomCreate,
     db:   Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
