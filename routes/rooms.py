@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, insert, delete
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import Session, selectinload
 
 from dependency import get_db
 from models import User, Room, Message, room_members, RoomType
@@ -70,7 +70,7 @@ async def list_rooms(
 @router.post("", response_model=RoomPublic, status_code=201)
 async def create_room(
     body: RoomCreate,
-    db: AsyncSession = Depends(get_db),
+    db:   Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     room = Room(
@@ -81,18 +81,18 @@ async def create_room(
         created_by=current_user.id,
     )
     db.add(room)
-    await db.flush()  # get room.id
+    db.flush()  # get room.id
 
     # Auto-add creator as admin member
-    await db.execute(
+    db.execute(
         insert(room_members).values(
             user_id=current_user.id,
             room_id=room.id,
             is_admin=True,
         )
     )
-    await db.commit()
-    await db.refresh(room)
+    db.commit()
+    db.refresh(room)
     return RoomPublic(
         id=room.id, name=room.name, description=room.description,
         type=room.type, is_private=room.is_private,
@@ -121,19 +121,19 @@ async def get_room(
 @router.post("/{room_id}/join", status_code=204)
 async def join_room(
     room_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    room = await _room_or_404(room_id, db)
+    room = _room_or_404(room_id, db)
     if room.is_private:
         raise HTTPException(status_code=403, detail="Room is private — you need an invite")
     if _is_member(room, current_user.id):
         return  # already a member, no-op
 
-    await db.execute(
+    db.execute(
         insert(room_members).values(user_id=current_user.id, room_id=room_id)
     )
-    await db.commit()
+    db.commit()
 
 
 @router.post("/{room_id}/leave", status_code=204)
