@@ -4,14 +4,9 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-import uuid
 import enum
 
 from database import Base
-
-
-def gen_uuid():
-    return str(uuid.uuid4())
 
 
 # ─── Association table: room members ─────────────────────────────────────────
@@ -19,8 +14,8 @@ def gen_uuid():
 room_members = Table(
     "room_members",
     Base.metadata,
-    Column("user_id", String, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
-    Column("room_id", String, ForeignKey("rooms.id", ondelete="CASCADE"), primary_key=True),
+    Column("user_id", Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
+    Column("room_id", Integer, ForeignKey("rooms.id", ondelete="CASCADE"), primary_key=True),
     Column("joined_at", DateTime(timezone=True), server_default=func.now()),
     Column("is_admin", Boolean, default=False),
 )
@@ -50,7 +45,7 @@ class MessageStatus(str, enum.Enum):
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(String, primary_key=True, default=gen_uuid)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(50), unique=True, nullable=False, index=True)
     display_name = Column(String(100), nullable=False)
     hashed_password = Column(String, nullable=False)
@@ -66,12 +61,12 @@ class User(Base):
 class Room(Base):
     __tablename__ = "rooms"
 
-    id = Column(String, primary_key=True, default=gen_uuid)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(100), nullable=False)
     description = Column(String(255), nullable=True)
     type = Column(SAEnum(RoomType), default=RoomType.channel)
     is_private = Column(Boolean, default=False)
-    created_by = Column(String, ForeignKey("users.id"), nullable=True)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     members = relationship("User", secondary=room_members, back_populates="rooms")
@@ -83,9 +78,9 @@ class Room(Base):
 class Message(Base):
     __tablename__ = "messages"
 
-    id = Column(String, primary_key=True, default=gen_uuid)
-    room_id = Column(String, ForeignKey("rooms.id", ondelete="CASCADE"), nullable=False, index=True)
-    sender_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    room_id = Column(Integer, ForeignKey("rooms.id", ondelete="CASCADE"), nullable=False, index=True)
+    sender_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     content = Column(Text, nullable=False)
     status = Column(SAEnum(MessageStatus), default=MessageStatus.sent)
     edited = Column(Boolean, default=False)
