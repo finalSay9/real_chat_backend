@@ -187,7 +187,7 @@ async def websocket_room(
 
         # If user has no more active rooms, mark offline
         if manager.user_room_count(user.id) == 0:
-            async with AsyncSessionLocal() as db:
+            async with SessionLocal() as db:
                 result = await db.execute(select(User).where(User.id == user.id))
                 u = result.scalar_one_or_none()
                 if u:
