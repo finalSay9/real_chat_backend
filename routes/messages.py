@@ -48,7 +48,7 @@ async def list_messages(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    await _assert_member(room_id, current_user.id, db)
+    _assert_member(room_id, current_user.id, db)
 
     q = (
         select(Message)
@@ -65,14 +65,14 @@ async def list_messages(
         if cursor_msg:
             q = q.where(Message.created_at < cursor_msg.created_at)
 
-    result = await db.execute(q)
+    result = db.execute(q)
     msgs = result.scalars().all()
 
     has_more = len(msgs) > limit
     msgs = msgs[:limit]
     msgs.reverse()  # return chronological order
 
-    total_result = await db.execute(
+    total_result = db.execute(
         select(func.count()).where(Message.room_id == room_id, Message.deleted == False)
     )
     total = total_result.scalar()
