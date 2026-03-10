@@ -107,7 +107,7 @@ async def get_current_user_async(
     if not user_id:
         raise exc
 
-    result = await db.execute(
+    result = db.execute(
         select(User).where(User.id == int(user_id), User.is_active == True)
     )
     user = result.scalar_one_or_none()

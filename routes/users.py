@@ -106,7 +106,7 @@ async def list_users(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user_async),
 ):
-    result = await db.execute(select(User).where(User.is_active == True))
+    result = db.execute(select(User).where(User.is_active == True))
     return result.scalars().all()
 
 

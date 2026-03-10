@@ -12,8 +12,8 @@ from ws_manager import manager
 router = APIRouter(prefix="/rooms/{room_id}/messages", tags=["messages"])
 
 
-async def _assert_member(room_id: str, user_id: str, db: AsyncSession):
-    result = await db.execute(
+def _assert_member(room_id: str, user_id: str, db: AsyncSession):
+    result =db.execute(
         select(room_members).where(
             room_members.c.room_id == room_id,
             room_members.c.user_id == user_id,
