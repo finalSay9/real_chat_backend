@@ -87,13 +87,13 @@ async def list_messages(
 
 
 @router.post("", response_model=MessagePublic, status_code=201)
-async def send_message(
+def send_message(
     room_id: str,
     body: MessageCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    await _assert_member(room_id, current_user.id, db)
+    _assert_member(room_id, current_user.id, db)
 
     msg = Message(
         room_id=room_id,
