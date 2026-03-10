@@ -101,11 +101,11 @@ def send_message(
         content=body.content,
     )
     db.add(msg)
-    await db.commit()
-    await db.refresh(msg)
+    db.commit()
+    db.refresh(msg)
 
     # Reload with sender relationship
-    result = await db.execute(
+    result =db.execute(
         select(Message).options(selectinload(Message.sender)).where(Message.id == msg.id)
     )
     msg = result.scalar_one()
