@@ -113,7 +113,7 @@ def send_message(
     schema = _to_schema(msg)
 
     # Broadcast to all room members via WebSocket
-    await manager.broadcast(
+    manager.broadcast(
         room_id,
         {
             "type": "message",
