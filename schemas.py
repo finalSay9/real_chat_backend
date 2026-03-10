@@ -25,7 +25,7 @@ class TokenResponse(BaseModel):
 # ─── Users ────────────────────────────────────────────────────────────────────
 
 class UserPublic(BaseModel):
-    id: str
+    id: int
     username: str
     display_name: str
     status: UserStatus
@@ -52,12 +52,12 @@ class RoomCreate(BaseModel):
 
 
 class RoomPublic(BaseModel):
-    id: str
+    id: int
     name: str
     description: Optional[str]
     type: RoomType
     is_private: bool
-    created_by: Optional[str]
+    created_by: Optional[int]
     created_at: datetime
     member_count: int = 0
 
@@ -77,9 +77,9 @@ class MessageCreate(BaseModel):
 
 
 class MessagePublic(BaseModel):
-    id: str
-    room_id: str
-    sender_id: str
+    id: int
+    room_id: int
+    sender_id: int
     sender_name: str
     content: str
     status: MessageStatus
